@@ -58,7 +58,9 @@ exports.handler = async function(event) {
   // create an object with the course data to hold the return value from our lambda
   let returnValue = {
     courseNumber: courseData.courseNumber,
-    name: courseData.name
+    name: courseData.name, 
+    numReviews: 0,
+    avgRating: 0
   }
 
   // set a new Array as part of the return value
@@ -86,7 +88,7 @@ exports.handler = async function(event) {
 
     // get the data from the returned document
     let lecturer = lecturerQuery.data()
-
+    
     // add the lecturer's name to the section Object
     sectionObject.lecturerName = lecturer.name
 
@@ -94,7 +96,53 @@ exports.handler = async function(event) {
     returnValue.sections.push(sectionObject)
 
     // 🔥 your code for the reviews/ratings goes here
+
+    // ask Firebase for the reviews with the ID provided by the section;
+    let reviewQuery = await db.collection('reviews').where(`sectionId`, `==`, sectionId).get()
+
+    //get the document from the query
+    let reviews = reviewQuery.docs
+    console.log(reviews)
+
+    // create an attribute the count the number of review to be added to the section object
+    sectionObject.numReviews = 0
+    sectionObject.avgRating = 0
+
+    // create an review Object to be added to the Array of section
+    let reviewObject = {}
+      // loop through the review documents
+      for (let j=0; j < reviews.length; j++){
+
+      // get the data from the returned document
+      let reviewData = reviews[j].data()
+
+      // create an Object to be addde to the Array of section
+      let reviewObject = {
+        reviewRating: reviewData.rating,
+        reviewComment: reviewData.body
+      }   
+
+      // Counting reviews for the section
+      sectionObject.numReviews = sectionObject.numReviews + 1
+
+      // Adding ratings for the section
+      sectionObject.avgRating = sectionObject.avgRating + reviewData.rating  
+
+      // Counting reviews for the course  
+      returnValue.numReviews = returnValue.numReviews+1
+
+      // Adding rating for the course
+      returnValue.avgRating = returnValue.avgRating + reviewData.rating
+
+    // add the review Object to the return value
+    returnValue.sections.push(reviewObject)
+    } 
+
+    // Caculation the average rating for the section
+    sectionObject.avgRating = sectionObject.avgRating/(reviews.length)
   }
+      // Caculation the average rating for the course
+      returnValue.avgRating = returnValue.avgRating / returnValue.numReviews
 
   // return the standard response
   return {

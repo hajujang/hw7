@@ -59,6 +59,7 @@ exports.handler = async function(event) {
   let returnValue = {
     courseNumber: courseData.courseNumber,
     name: courseData.name, 
+    // create the number of reviews and average rating for the course
     numReviews: 0,
     avgRating: 0
   }
@@ -104,12 +105,13 @@ exports.handler = async function(event) {
     let reviews = reviewQuery.docs
     console.log(reviews)
 
-    // create an attribute the count the number of review to be added to the section object
+    // create an attribute to count the number of review and to add the ratings to be added to the section object
     sectionObject.numReviews = 0
     sectionObject.avgRating = 0
 
     // create an review Object to be added to the Array of section
     let reviewObject = {}
+    
       // loop through the review documents
       for (let j=0; j < reviews.length; j++){
 
